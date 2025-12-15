@@ -50,11 +50,12 @@ cd health-booking-care-10
 npm install
 ```
 
-3. Set up environment variables by creating a `.env` file:
+3. Set up environment variables by creating a `.env.local` file (never commit actual credentials to version control):
 ```env
-VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+⚠️ **Security Warning**: Never commit actual API keys or sensitive credentials to version control. Always use environment variables and ensure your `.env` files are listed in `.gitignore`.
 
 4. Start the development server:
 ```bash
@@ -108,9 +109,19 @@ vercel
 4. Deploy your project
 
 #### Environment Variables
-If your application uses environment variables (e.g., for Supabase), make sure to configure them in your Vercel project settings under Settings → Environment Variables.
+This application uses Supabase for backend services. To deploy securely:
 
-The project is configured with `vercel.json` to ensure correct deployment settings for a Vite React application.
+1. **Never expose credentials in source code**
+2. **Configure environment variables in Vercel Dashboard**:
+   - Navigate to your project in the Vercel Dashboard
+   - Go to Settings → Environment Variables
+   - Add these variables:
+     - `VITE_SUPABASE_URL`: Your Supabase project URL
+     - `VITE_SUPABASE_ANON_KEY`: Your Supabase anon key
+3. **Protect your credentials**: Always store sensitive data in environment variables, never in the codebase
+4. **Local development**: Use `.env.local` file which is ignored by git (update your `.gitignore` if needed)
+
+⚠️ **Security Note**: The application is designed to load sensitive configuration from environment variables. Ensure these are configured correctly in your deployment environment and never commit actual credentials to the repository.
 
 ## 🏗️ Project Structure
 
