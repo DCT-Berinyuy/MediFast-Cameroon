@@ -4,35 +4,85 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-let supabase;
+function isPlaceholder(value: string | undefined) {
+  if (!value) return true;
+  const v = value.toLowerCase();
+  return v.includes('your') || v.includes('example') || v === '';
+}
 
-if (supabaseUrl && supabaseKey) {
+// Minimal typing for the mock client to satisfy common usage sites
+type MockResponse<T = any> = Promise<{ data: T; error: any } | { data: null; error: any }>;
+
+type MockFrom = (table: string) => {
+  select: (columns?: string) => MockResponse<any>;
+  insert: (values: any) => MockResponse<any>;
+  update: (values: any) => MockResponse<any>;
+  delete: () => MockResponse<any>;
+  eq: (column: string, value: any) => MockResponse<any>;
+  order: (column: string, options?: any) => MockResponse<any>;
+};
+
+type MockAuth = {
+  signInWithPassword: (creds: { email: string; password: string }) => MockResponse<any>;
+  signOut: () => MockResponse<any>;
+  getSession: () => MockResponse<any>;
+  onAuthStateChange: (cb: (...args: any[]) => void) => { data: { subscription: { unsubscribe: () => void } } };
+  signUp: (creds: { email: string; password: string }) => MockResponse<any>;
+};
+
+type MockStorage = {
+  from: (bucket: string) => {
+    upload: (path: string, file: any) => MockResponse<any>;
+    getPublicUrl: (path: string) => { data: { publicUrl: string } };
+  };
+};
+
+let supabase: any;
+
+if (!isPlaceholder(supabaseUrl) && !isPlaceholder(supabaseKey)) {
   // Initialize Supabase client with provided credentials
   supabase = createClient(supabaseUrl, supabaseKey);
 } else {
-  // Provide a mock client for development without Supabase credentials
+  const warningMsg =
+    'Supabase environment variables not found or contain placeholders. The app will run in limited mode without database functionality.';
+
+  // Warn in development and production but do not crash; provide a Promise-based mock client
   console.warn(
-    'Supabase environment variables not found. The app will run in limited mode without database functionality.\n' +
-    'To enable full functionality, create a .env.local file with:\n' +
-    'VITE_SUPABASE_URL=your_supabase_url\n' +
+    warningMsg + '\nTo enable full functionality, configure environment variables:\n' +
+    'VITE_SUPABASE_URL=your_supabase_project_url\n' +
     'VITE_SUPABASE_ANON_KEY=your_supabase_anon_key'
   );
 
-  // Create a mock client with no-op functions for development
-  supabase = {
-    from: () => ({
-      select: () => ({ data: [], error: null }),
-      insert: () => ({ data: [], error: null }),
-      update: () => ({ data: [], error: null }),
-      delete: () => ({ data: [], error: null }),
+  const mockFrom: MockFrom = (table: string) => ({
+    select: (columns?: string) => Promise.resolve({ data: [], error: null }),
+    insert: (values: any) => Promise.resolve({ data: values, error: null }),
+    update: (values: any) => Promise.resolve({ data: values, error: null }),
+    delete: () => Promise.resolve({ data: null, error: null }),
+    eq: (column: string, value: any) => Promise.resolve({ data: [], error: null }),
+    order: (column: string, options?: any) => Promise.resolve({ data: [], error: null }),
+  });
+
+  const mockAuth: MockAuth = {
+    signInWithPassword: ({ email, password }: { email: string; password: string }) =>
+      Promise.resolve({ data: { user: { id: 'mock-user-id', email }, session: { access_token: 'mock-token' } }, error: null }),
+    signOut: () => Promise.resolve({ data: null, error: null }),
+    getSession: () => Promise.resolve({ data: { session: null }, error: null }),
+    onAuthStateChange: (callback: any) => ({ data: { subscription: { unsubscribe: () => {} } } }),
+    signUp: ({ email, password }: { email: string; password: string }) =>
+      Promise.resolve({ data: { user: { id: 'mock-user-id', email } }, error: null }),
+  };
+
+  const mockStorage: MockStorage = {
+    from: (bucket: string) => ({
+      upload: (path: string, file: any) => Promise.resolve({ data: { path }, error: null }),
+      getPublicUrl: (path: string) => ({ data: { publicUrl: `https://mock-url/${path}` } }),
     }),
-    auth: {
-      signIn: () => Promise.resolve({ data: {}, error: null }),
-      signOut: () => Promise.resolve({ error: null }),
-      getSession: () => Promise.resolve({ data: { session: null }, error: null }),
-      onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } }, error: null }),
-    },
-    // Add other necessary mock methods as needed
+  };
+
+  supabase = {
+    from: mockFrom,
+    auth: mockAuth,
+    storage: mockStorage,
   };
 }
 
