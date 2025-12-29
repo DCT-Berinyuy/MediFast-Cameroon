@@ -7,14 +7,15 @@ export default function HospitalMap() {
   const [hospitals, setHospitals] = useState([]);
 
   // 1. Get user location
-  useEffect(() => {
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPosition([pos.coords.latitude, pos.coords.longitude]);
-      },
-      (err) => console.error("Location error:", err)
-    );
-  }, []);
+ const handleLocateMe = () => {
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      setPosition([pos.coords.latitude, pos.coords.longitude]);
+    },
+    (err) => console.error("Location error:", err)
+  );
+};
+
 
   // 2. Fetch hospitals after we have location
   useEffect(() => {
