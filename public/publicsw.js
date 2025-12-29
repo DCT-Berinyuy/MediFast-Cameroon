@@ -1,17 +1,20 @@
 self.addEventListener("install", (event) => 
 {
-  event.waituntil(caches.open("medifast-cache").then(cache) =>
+  event.waitUntil(caches.open("medifast-cache").then((cache) =>
                   {
-    return cache.addAll([
-      "/",
-      "/index.html"
-      ]);
-  });
+                      return cache.addAll([
+                        "/",
+                        "/index.html"
+                        ]);
+                  });
+                );
+});
+  
 
 self.addEventListener("fetch", (event) =>
   {
     event.respondWith(
-      caches.match(eventrequest).then((response) => 
+      caches.match(event.request).then((response) => 
         {
           return response || fetch(event.request);
         })
