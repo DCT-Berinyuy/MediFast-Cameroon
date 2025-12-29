@@ -39,6 +39,8 @@ const HospitalLocator: React.FC = () => {
         {language === 'fr' ? 'Hôpitaux à Proximité' : 'Nearby Hospitals'}
       </h2>
 
+      <button onClick={handleLocateMe} className="mb-4 px-4 py-2 rounded-full bg-blue-600 text-white" >
+
       <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
         {['all', 'Yaoundé', 'Douala'].map(city => (
           <button key={city} onClick={() => setSelectedCity(city)}
